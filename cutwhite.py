@@ -2,7 +2,7 @@ import argparse
 import logging
 import os
 
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfWriter, PdfReader
 
 import miner
 from utils import get_logger
@@ -32,19 +32,19 @@ def fix_box(page, fix):
     """
     cut the box by setting new position (relative position)
     """
-    box = page.mediaBox
-    logger.info('media box: %s', page.mediaBox)
-    logger.debug(page.trimBox)
-    logger.debug(page.artBox)
-    logger.debug(page.cropBox)
-    logger.debug(page.bleedBox)
+    box = page.mediabox
+    logger.info('media box: %s', page.mediabox)
+    logger.debug(page.trimbox)
+    logger.debug(page.artbox)
+    logger.debug(page.cropbox)
+    logger.debug(page.bleedbox)
 
     # must translate relative position to absolute position
     # box position
-    bx, by = box.getLowerLeft()
+    bx, by = box.lower_left
     bx = float(bx)
     by = float(by)
-    bx2, by2 = box.getUpperRight()
+    bx2, by2 = box.upper_right
     bx2, by2 = float(bx2), float(by2)
 
     # given position to fix
@@ -57,8 +57,8 @@ def fix_box(page, fix):
 
     logger.info("origin box: %s", (box))
 
-    box.lowerLeft = (fx1, fy1)
-    box.upperRight = (fx2, fy2)
+    box.lower_left = (fx1, fy1)
+    box.upper_right = (fx2, fy2)
 
     logger.info("fixed box: %s", (box))
 
@@ -77,22 +77,22 @@ def cut_white(inpath, outpath: str = None, ignore=0):
         pages = []
         with open(inpath, 'rb') as infd:
             logger.info('process file: %s', inpath)
-            outpdf = PdfFileWriter()
-            inpdf = PdfFileReader(infd)
+            outpdf = PdfWriter()
+            inpdf = PdfReader(infd)
 
             # get the visible area of the page, aka the box scale. res=[(x1,y1,x2,y2)]
             pageboxlist = miner.mine_area(inpath, ignore=ignore)
 
-            num = inpdf.getNumPages()
+            num = len(inpdf.pages)
             for i in range(num):
                 # scale is the max box of the page
                 scale = pageboxlist[i]
-                page = inpdf.getPage(i)
+                page = inpdf.pages[i]
 
                 logger.info('origin scale: %s', scale)
 
                 fix_box(page, scale)
-                outpdf.addPage(page)
+                outpdf.add_page(page)
 
             if outpath:
                 with open(outpath, 'wb') as outfd:
